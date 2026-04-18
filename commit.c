@@ -200,4 +200,21 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         return -1;
     }
  
+    Commit commit;
+    memset(&commit, 0, sizeof(commit));
+ 
+    commit.tree = tree_id;
+    commit.timestamp = (uint64_t)time(NULL);
+    strncpy(commit.author, pes_author(), sizeof(commit.author) - 1);
+    strncpy(commit.message, message, sizeof(commit.message) - 1);
+ 
+
+    ObjectID parent_id;
+    if (head_read(&parent_id) == 0) {
+        commit.parent = parent_id;
+        commit.has_parent = 1;
+    } else {
+        commit.has_parent = 0;
+    }
+ 
 }
