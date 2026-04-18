@@ -230,4 +230,16 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     else if (strcmp(type_str, "commit") == 0) *type_out = OBJ_COMMIT;
     else { free(raw); return -1; }
 
+    uint8_t *data_start = null_pos + 1;
+    size_t actual_data_len = (size_t)file_size - (size_t)(data_start - raw);
+    uint8_t *out = malloc(actual_data_len + 1);
+    if (!out) { free(raw); return -1; }
+    memcpy(out, data_start, actual_data_len);
+    out[actual_data_len] = '\0'; 
+ 
+    *data_out = out;
+    *len_out  = actual_data_len;
+    free(raw);
+    return 0;
+
 }
