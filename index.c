@@ -276,4 +276,26 @@ int index_add(Index *index, const char *path) {
     else                             mode = 0100644;
      
 
+
+    IndexEntry *existing = index_find(index, path);
+    if (existing) {
+        existing->mode      = mode;
+        existing->hash      = blob_id;
+        existing->mtime_sec = (uint64_t)st.st_mtime;
+        existing->size      = (uint32_t)st.st_size;
+    } else {
+        if (index->count >= MAX_INDEX_ENTRIES) {
+            fprintf(stderr, "error: index is full\n");
+            return -1;
+        }
+        IndexEntry *e = &index->entries[index->count++];
+        e->mode      = mode;
+        e->hash      = blob_id;
+        e->mtime_sec = (uint64_t)st.st_mtime;
+        e->size      = (uint32_t)st.st_size;
+        strncpy(e->path, path, sizeof(e->path) - 1);
+        e->path[sizeof(e->path) - 1] = '\0';
+    }
+ 
+    return index_save(index);    
 }
