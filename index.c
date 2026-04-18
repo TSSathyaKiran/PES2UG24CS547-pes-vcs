@@ -255,4 +255,25 @@ int index_add(Index *index, const char *path) {
         free(contents); fclose(f); return -1;
     }
     fclose(f);
+
+    ObjectID blob_id;
+    if (object_write(OBJ_BLOB, contents, (size_t)file_size, &blob_id) != 0) {
+        free(contents);
+        fprintf(stderr, "error: failed to write blob for '%s'\n", path);
+        return -1;
+    }
+    free(contents);
+ 
+    struct stat st;
+    if (lstat(path, &st) != 0) {
+        fprintf(stderr, "error: cannot stat '%s'\n", path);
+        return -1;
+    }
+ 
+    uint32_t mode;
+    if (S_ISDIR(st.st_mode))        mode = 0040000;
+    else if (st.st_mode & S_IXUSR)  mode = 0100755;
+    else                             mode = 0100644;
+     
+
 }
