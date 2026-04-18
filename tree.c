@@ -194,6 +194,11 @@ static int compare_index_by_path(const void *a, const void *b) {
 
 int tree_from_index(ObjectID *id_out) {
 
-
+    Index index;
+    if (index_load(&index) != 0) return -1;
+    if (index.count == 0) return -1;
+    qsort(index.entries, index.count, sizeof(IndexEntry), compare_index_by_path);
+ 
+    return write_tree_level(index.entries, index.count, "", id_out);
 
 }
