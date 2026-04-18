@@ -119,6 +119,34 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
         return 0;
     }
  
+    char hex[HASH_HEX_SIZE + 1];
+    hash_to_hex(&id, hex);
+    char shard_dir[256];
+    snprintf(shard_dir, sizeof(shard_dir), "%s/%.2s", OBJECTS_DIR, hex);
+    mkdir(shard_dir, 0755);
+
+    char final_path[512];
+    object_path(&id, final_path, sizeof(final_path));
+    char tmp_path[520];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", final_path);
+
+    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0) {
+        free(full_obj);
+        return -1;
+    }
+
+    ssize_t written = write(fd, full_obj, full_len);
+    free(full_obj);
+    if (written < 0 || (size_t)written != full_len) {
+        close(fd);
+        unlink(tmp_path);
+        return -1;
+    }
+ 
+    fsync(fd);
+    close(fd);
+
     (void)type; (void)data; (void)len; (void)id_out;
     return -1;
 }
