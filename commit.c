@@ -230,4 +230,12 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         fprintf(stderr, "error: failed to write commit object\n");
         return -1;
     }
+
+    if (head_update(&commit_id) != 0) {
+        fprintf(stderr, "error: failed to update HEAD\n");
+        return -1;
+    }
+ 
+    if (commit_id_out) *commit_id_out = commit_id;
+    return 0;
 }
