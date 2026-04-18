@@ -203,4 +203,31 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         free(raw); fclose(f); return -1;
     }
     fclose(f);
+
+    uint8_t *null_pos = memchr(raw, '\0', (size_t)file_size);
+    if (!null_pos) { free(raw); return -1; }
+ 
+    char header[64];
+    size_t hdr_len = null_pos - raw;
+    if (hdr_len >= sizeof(header)) { free(raw); return -1; }
+    memcpy(header, raw, hdr_len);
+    header[hdr_len] = '\0';
+ 
+    char type_str[16];
+    size_t data_size;
+    if (sscanf(header, "%15s %zu", type_str, &data_size) != 2) {
+        free(raw); return -1;
+    }
+
+    ObjectID computed;
+    compute_hash(raw, (size_t)file_size, &computed);
+    if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
+        free(raw); return -1;
+    }
+
+    if      (strcmp(type_str, "blob")   == 0) *type_out = OBJ_BLOB;
+    else if (strcmp(type_str, "tree")   == 0) *type_out = OBJ_TREE;
+    else if (strcmp(type_str, "commit") == 0) *type_out = OBJ_COMMIT;
+    else { free(raw); return -1; }
+
 }
